@@ -3,7 +3,7 @@
 <mapper namespace="org.coketom.mapper.SysUserMapper">
 
     <sql id="columns">
-        id,username userName ,password,name,mail,phone,avatar,description,status,create_time,update_time,is_deleted
+        id,username,password,name,email,phone,avatar,description,status,create_time,update_time
     </sql>
 
 <!--    &lt;!&ndash;    //4 用户删除&ndash;&gt;-->
@@ -85,8 +85,47 @@
 
     <select id="selectUserInfoByUserName" resultType="org.coketom.entity.system.SysUser">
         SELECT <include refid="columns"/>
-        FROM sys_user
-        WHERE username=#{userName}
-        and is_deleted=0
+        FROM user
+        WHERE username=#{username}
     </select>
+
+    <insert id="register" parameterType="org.coketom.entity.system.SysUser">
+        insert into user (
+            username,
+            name,
+            password,
+            email
+        ) values (
+                     #{username},
+                     #{username},
+                     #{password},
+                     #{email}
+                 )
+    </insert>
+
+    <update id="setEmail">
+        UPDATE user
+        SET email = #{email}
+        WHERE id = #{userId}
+    </update>
+
+    <update id="setPhone">
+        UPDATE user
+        SET phone = #{phone}
+        WHERE id = #{userId}
+    </update>
+
+    <update id="setName">
+        UPDATE user
+        SET name = #{name}
+        WHERE id = #{userId}
+    </update>
+
+    <update id="setDescription">
+        UPDATE user
+        SET description = #{description}
+        WHERE id = #{userId}
+    </update>
+
+
 </mapper>

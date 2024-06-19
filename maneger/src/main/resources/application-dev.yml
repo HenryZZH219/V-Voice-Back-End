@@ -1,0 +1,52 @@
+server:
+  port: 8501
+
+spring:
+  datasource:
+    type: com.zaxxer.hikari.HikariDataSource
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://124.70.216.41:3306/vvoice?characterEncoding=utf-8&useSSL=false&allowPublicKeyRetrieval=true
+    username: VVoice
+    password: kM7mfKSn87Gtm5fe
+  data:
+    redis:
+      host: 192.168.123.96
+      port: 6379
+
+mybatis:
+  mapper-locations: classpath:/mapper/*/*.xml
+  config-location: classpath:/mybatis-config.xml
+
+vvoice:
+  auth:
+    noAuthUrls:
+      - /index/**
+      - /webjars/**
+      - /v3/**
+
+  minio:
+    endpointUrl: http://192.168.123.96:9089
+    accessKey: admin
+    secreKey: admin123456
+    bucketName: spzx-bucket
+
+
+## springdoc-openapi项目配置
+#springdoc:
+#  swagger-ui:
+#    path: /swagger-ui.html
+#    tags-sorter: alpha
+#    operations-sorter: alpha
+#  api-docs:
+#    path: /v3/api-docs
+#  group-configs:
+#    - group: 'default'
+#      paths-to-match: '/admin/**'
+#      packages-to-scan: com.xiaominfo.knife4j.demo.web
+## knife4j的增强配置，不需要增强可以不配
+#knife4j:
+#  enable: true
+#  setting:
+#    language: zh_cn
+
+

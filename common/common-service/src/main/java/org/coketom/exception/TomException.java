@@ -5,7 +5,7 @@ import lombok.Data;
 import org.coketom.vo.common.ResultCodeEnum;
 
 @Data
-public class TomException {
+public class TomException extends RuntimeException{
     private Integer code;
     private String message;
     private ResultCodeEnum resultCodeEnum;
