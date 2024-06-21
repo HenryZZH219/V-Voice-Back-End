@@ -16,4 +16,6 @@ public interface SysUserMapper {
     void setName(Integer userId, String name);
 
     void setDescription(Integer userId, String description);
+
+    void setPasswd(Integer userId, String newPasswd);
 }

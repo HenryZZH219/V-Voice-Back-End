@@ -1,5 +1,6 @@
 package org.coketom.controller;
 
+import org.coketom.dto.system.PasswdDto;
 import org.coketom.entity.system.SysUser;
 import org.coketom.service.SysUserService;
 import org.coketom.vo.common.Result;
@@ -18,10 +19,15 @@ public class UserController {
         return Result.build(sysUser, ResultCodeEnum.SUCCESS);
     }
 
-    @PostMapping("/updateUser")
-    public Result register(@RequestHeader(name = "token") String token, @RequestBody SysUser sysUser){
-        System.out.println(sysUser);
+    @PutMapping("/updateUser")
+    public Result updateUser(@RequestHeader(name = "token") String token, @RequestBody SysUser sysUser){
         sysUserService.updateUser(token, sysUser);
+        return Result.build(null, ResultCodeEnum.SUCCESS);
+    }
+
+    @PutMapping("/updatePasswd")
+    public Result updatePasswd(@RequestHeader(name = "token") String token, @RequestBody PasswdDto passwdDto){
+        sysUserService.updatePasswd(token, passwdDto);
         return Result.build(null, ResultCodeEnum.SUCCESS);
     }
 }

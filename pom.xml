@@ -52,6 +52,8 @@
                 <artifactId>lombok</artifactId>
                 <version>${lombok.version}</version>
             </dependency>
+
+
         </dependencies>
     </dependencyManagement>
 
@@ -63,6 +65,7 @@
         <fastjson.version>2.0.21</fastjson.version>
         <lombok.version>1.18.30</lombok.version>
         <mybatis.version>3.0.1</mybatis.version>
+
     </properties>
 
 </project>
