@@ -1,6 +1,7 @@
 package org.coketom.service;
 
 import org.coketom.dto.system.LoginDto;
+import org.coketom.dto.system.PasswdDto;
 import org.coketom.entity.system.SysUser;
 import org.coketom.vo.system.LoginVo;
 
@@ -14,4 +15,6 @@ public interface SysUserService {
     SysUser getuserinfo(String token);
 
     void updateUser(String token, SysUser sysUser);
+
+    void updatePasswd(String token, PasswdDto passwdDto);
 }

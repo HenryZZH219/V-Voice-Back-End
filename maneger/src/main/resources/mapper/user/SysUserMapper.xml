@@ -127,5 +127,11 @@
         WHERE id = #{userId}
     </update>
 
+    <update id="setPasswd">
+        UPDATE user
+        SET password = #{newPasswd}
+        WHERE id = #{userId}
+    </update>
+
 
 </mapper>

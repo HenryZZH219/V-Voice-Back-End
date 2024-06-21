@@ -3,6 +3,7 @@ package org.coketom.service.impl;
 import com.alibaba.fastjson.JSON;
 import org.coketom.AuthContextUtil;
 import org.coketom.dto.system.LoginDto;
+import org.coketom.dto.system.PasswdDto;
 import org.coketom.entity.system.SysUser;
 import org.coketom.exception.TomException;
 import org.coketom.mapper.SysUserMapper;
@@ -95,6 +96,24 @@ public class SysUserServiceImpl implements SysUserService {
             sysUserMapper.setDescription(userId, sysUser.getDescription());
         }
         String userName = AuthContextUtil.get().getUsername();
+        sysUser = sysUserMapper.selectUserInfoByUserName(userName);
+        redisTemplate.opsForValue()
+                .set("user:login"+token,
+                        JSON.toJSONString(sysUser),
+                        30,
+                        TimeUnit.MINUTES);
+    }
+
+    @Override
+    public void updatePasswd(String token, PasswdDto passwdDto) {
+        SysUser sysUser = AuthContextUtil.get();
+        String oldPasswd = DigestUtils.md5DigestAsHex(passwdDto.getOldPasswd().getBytes());
+        if(!oldPasswd.equals(sysUser.getPassword())){
+            throw new TomException(ResultCodeEnum.LOGIN_ERROR);
+        }
+        String newPasswd = DigestUtils.md5DigestAsHex(passwdDto.getNewPasswd().getBytes());
+        sysUserMapper.setPasswd(sysUser.getId(), newPasswd);
+        String userName = sysUser.getUsername();
         sysUser = sysUserMapper.selectUserInfoByUserName(userName);
         redisTemplate.opsForValue()
                 .set("user:login"+token,
