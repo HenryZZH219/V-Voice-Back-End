@@ -8,6 +8,7 @@ import com.alibaba.fastjson.JSON;
 //import com.atguigu.spzx.utils.AuthContextUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import org.coketom.AuthContextUtil;
 import org.coketom.entity.system.SysUser;
 import org.coketom.vo.common.Result;
@@ -16,6 +17,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 import java.io.IOException;
@@ -58,6 +61,13 @@ public class LoginAuthInterceptor implements HandlerInterceptor {
         //6 如果redis查询到用户信息，把用户信息放到ThreadLocal里面
         SysUser sysUser = JSON.parseObject(userInfoString, SysUser.class);
         AuthContextUtil.set(sysUser);
+
+        //保存数据到httpsession中
+        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        HttpSession session = attributes.getRequest().getSession();
+
+        // 将用户信息存储到 HttpSession 中
+        session.setAttribute("userInfo", sysUser);
 
         //7 把redis用户信息数据更新过期时间
         redisTemplate.expire("user:login" + token,30, TimeUnit.MINUTES);

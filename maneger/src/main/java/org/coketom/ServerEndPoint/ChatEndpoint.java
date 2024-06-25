@@ -21,13 +21,19 @@ import org.coketom.service.MessageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-@ServerEndpoint(value = "/chat/{roomId}", configurator = HttpSessionConfigurator.class)
+@ServerEndpoint(value = "/chat/{roomId}")//, configurator = HttpSessionConfigurator.class
 @Component
 public class ChatEndpoint {
 
 
+
+    private static MessageService messageService;
+
     @Autowired
-    private MessageService messageService;
+    private void setMessageService(MessageService messageService){
+        this.messageService = messageService;
+    }
+
     private static final Set<ChatEndpoint> connections = new CopyOnWriteArraySet<>();
     public Session session;
     private HttpSession httpSession;
@@ -35,26 +41,43 @@ public class ChatEndpoint {
     private Integer roomId;
     @OnOpen
     public void onOpen(Session session, @PathParam("roomId") Integer roomId) {
+
         this.session = session;
         this.roomId = roomId;
         this.httpSession = (HttpSession) session.getUserProperties().get(HttpSession.class.getName());
         connections.add(this);
         // You can now use the httpSession object
-        SysUser sysUser = AuthContextUtil.get();
-        String message = String.format("【%d加入语音】", sysUser.getName());
+        SysUser sysUser = (SysUser) session.getUserProperties().get("userInfo");
+        String UserName;
+
+        if(sysUser == null)
+            UserName = "Unknown";
+        else
+            UserName = sysUser.getName();
+
+        String message = String.format("【%s加入语音】", UserName);
+
         UserMessage Msg = new UserMessage(this.roomId, 0, message, "TEXT");
+        System.out.println(messageService);
         messageService.broadcast(Msg, connections);
 
     }
 
     @OnClose
     public void onClose() {
-        connections.remove(this);
+
 
         SysUser sysUser = AuthContextUtil.get();
-        String message = String.format("【%d退出语音】", sysUser.getName());
+        String UserName;
+        if(sysUser == null)
+            UserName = "Unknown";
+        else
+            UserName = sysUser.getName();
+        String message = String.format("【%s退出语音】", UserName);
         UserMessage Msg = new UserMessage(this.roomId, 0, message, "TEXT");
         messageService.broadcast(Msg, connections);
+
+        connections.remove(this);
 
     }
 
