@@ -5,6 +5,8 @@ import org.coketom.dto.system.PasswdDto;
 import org.coketom.entity.system.SysUser;
 import org.coketom.vo.system.LoginVo;
 
+import java.util.List;
+
 public interface SysUserService {
     LoginVo login(LoginDto loginDto);
 
@@ -17,4 +19,6 @@ public interface SysUserService {
     void updateUser(String token, SysUser sysUser);
 
     void updatePasswd(String token, PasswdDto passwdDto);
+
+    List<SysUser> getUserInfoByIds(List<Integer> ids);
 }

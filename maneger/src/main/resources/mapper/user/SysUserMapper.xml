@@ -89,6 +89,13 @@
         WHERE username=#{username}
     </select>
 
+    <select id="selectUsersByIds" parameterType="list" resultType="org.coketom.entity.system.SysUser">
+        SELECT <include refid="columns"/> FROM user WHERE id IN
+        <foreach item="id" collection="list" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
     <insert id="register" parameterType="org.coketom.entity.system.SysUser">
         insert into user (
             username,

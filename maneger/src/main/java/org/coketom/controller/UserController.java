@@ -8,6 +8,8 @@ import org.coketom.vo.common.ResultCodeEnum;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping(value = "/user")
 public class UserController {
@@ -29,5 +31,11 @@ public class UserController {
     public Result updatePasswd(@RequestHeader(name = "token") String token, @RequestBody PasswdDto passwdDto){
         sysUserService.updatePasswd(token, passwdDto);
         return Result.build(null, ResultCodeEnum.SUCCESS);
+    }
+
+    @PostMapping("/GetUserInfoByIds")
+    public Result getUserInfoByIds(@RequestBody List<Integer> ids){
+        List<SysUser> sysUsers = sysUserService.getUserInfoByIds(ids);
+        return Result.build(sysUsers, ResultCodeEnum.SUCCESS);
     }
 }

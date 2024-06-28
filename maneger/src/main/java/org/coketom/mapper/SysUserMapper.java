@@ -3,10 +3,13 @@ package org.coketom.mapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.coketom.entity.system.SysUser;
 
+import java.util.List;
+
 @Mapper
 public interface SysUserMapper {
     SysUser selectUserInfoByUserName(String userName);
 
+    List<SysUser> selectUsersByIds(List<Integer> ids);
     void register(SysUser sysUser);
 
     void setEmail(Integer userId, String email);

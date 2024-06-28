@@ -2,10 +2,7 @@ package org.coketom.ServerEndPoint;
 
 import com.alibaba.fastjson.JSON;
 import jakarta.servlet.http.HttpSession;
-import jakarta.websocket.OnClose;
-import jakarta.websocket.OnMessage;
-import jakarta.websocket.OnOpen;
-import jakarta.websocket.Session;
+import jakarta.websocket.*;
 import jakarta.websocket.server.PathParam;
 import org.coketom.AuthContextUtil;
 import org.coketom.config.HttpSessionConfigurator;
@@ -21,7 +18,7 @@ import org.coketom.service.MessageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-@ServerEndpoint(value = "/chat/{roomId}")//, configurator = HttpSessionConfigurator.class
+@ServerEndpoint(value = "/chat/{roomId}", configurator = HttpSessionConfigurator.class)//
 @Component
 public class ChatEndpoint {
 
@@ -36,28 +33,31 @@ public class ChatEndpoint {
 
     private static final Set<ChatEndpoint> connections = new CopyOnWriteArraySet<>();
     public Session session;
-    private HttpSession httpSession;
+
 
     private Integer roomId;
+
+    private SysUser user;
     @OnOpen
-    public void onOpen(Session session, @PathParam("roomId") Integer roomId) {
+    public void onOpen(Session session, EndpointConfig config, @PathParam("roomId") Integer roomId ) {
 
         this.session = session;
         this.roomId = roomId;
-        this.httpSession = (HttpSession) session.getUserProperties().get(HttpSession.class.getName());
+
         connections.add(this);
-        // You can now use the httpSession object
-        SysUser sysUser = (SysUser) session.getUserProperties().get("userInfo");
-        String UserName;
 
-        if(sysUser == null)
-            UserName = "Unknown";
-        else
-            UserName = sysUser.getName();
+        String token = (String) config.getUserProperties().get("token");
+        System.out.println("Token: " + token);
 
-        String message = String.format("【%s加入语音】", UserName);
+        this.user = messageService.getUserInfo(token);
+        if(this.user == null) {
+            throw new RuntimeException();
+        }
 
-        UserMessage Msg = new UserMessage(this.roomId, 0, message, "TEXT");
+
+        String message = String.format("【%s加入语音】", this.user.getName());
+        System.out.println(message);
+        UserMessage Msg = new UserMessage(this.roomId, this.user.getId(), message, "TEXT");
         System.out.println(messageService);
         messageService.broadcast(Msg, connections);
 
@@ -65,35 +65,29 @@ public class ChatEndpoint {
 
     @OnClose
     public void onClose() {
-
-
-        SysUser sysUser = AuthContextUtil.get();
-        String UserName;
-        if(sysUser == null)
-            UserName = "Unknown";
-        else
-            UserName = sysUser.getName();
-        String message = String.format("【%s退出语音】", UserName);
-        UserMessage Msg = new UserMessage(this.roomId, 0, message, "TEXT");
+        connections.remove(this);
+        String message = String.format("【%s退出语音】",  this.user.getName());
+        System.out.println(message);
+        UserMessage Msg = new UserMessage(this.roomId, this.user.getId(), message, "TEXT");
         messageService.broadcast(Msg, connections);
 
-        connections.remove(this);
+
 
     }
 
     @OnMessage
     public void onMessage(String message) {
-        SysUser sysUser = AuthContextUtil.get();
+
         MessageDto messageDto = JSON.parseObject(message, MessageDto.class);
-        UserMessage userMessage = new UserMessage(messageDto, this.roomId, sysUser.getId());
+        UserMessage userMessage = new UserMessage(messageDto, this.roomId, this.user.getId());
         messageService.broadcast(userMessage, connections);
 
-//        messageService.saveMessage(userMessage);
+        messageService.saveMessage(userMessage);
     }
 
     private void broadcast(String message, boolean systemMsg) {
-        SysUser sysUser = AuthContextUtil.get();
-        UserMessage Msg = new UserMessage(this.roomId, sysUser.getId(), message, "TEXT");
+
+        UserMessage Msg = new UserMessage(this.roomId,  this.user.getId(), message, "TEXT");
 
     }
 }

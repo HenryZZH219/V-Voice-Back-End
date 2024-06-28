@@ -4,19 +4,24 @@
 
 
     <sql id="columns">
-        roomId
-        ,userID,content,messageType,createdAt
+        room_id,user_id,content,message_type,created_at
     </sql>
     <insert id="saveMessage">
-        insert into user (
+        insert into messages (
         <include refid="columns"/>
         ) values (
         #{roomId},
-        #{userID},
+        #{userId},
         #{content},
         #{messageType},
         #{createdAt}
         )
     </insert>
+
+    <select id="getMessagesByRoomId" parameterType="java.lang.Integer" resultType="org.coketom.entity.message.UserMessage">
+        SELECT message_id, <include refid="columns"/>
+        FROM messages
+        WHERE room_id = #{roomId}
+    </select>
 
 </mapper>

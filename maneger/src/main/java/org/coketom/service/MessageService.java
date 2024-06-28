@@ -4,6 +4,7 @@ import org.coketom.ServerEndPoint.ChatEndpoint;
 import org.coketom.entity.message.UserMessage;
 import org.coketom.entity.system.SysUser;
 
+import java.util.List;
 import java.util.Set;
 
 public interface MessageService {
@@ -11,4 +12,6 @@ public interface MessageService {
     void broadcast(UserMessage Msg, Set<ChatEndpoint> connections);
 
     void saveMessage(UserMessage userMessage);
+
+    List<UserMessage> getMessagesByRoomId(Integer roomId);
 }

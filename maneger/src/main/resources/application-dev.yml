@@ -8,9 +8,11 @@ spring:
     url: jdbc:mysql://124.70.216.41:3306/vvoice?characterEncoding=utf-8&useSSL=false&allowPublicKeyRetrieval=true
     username: VVoice
     password: kM7mfKSn87Gtm5fe
+    hikari:
+      max-lifetime: 60000
   data:
     redis:
-      host: 192.168.123.96
+      host: 127.0.0.1
       port: 6379
 
 mybatis:
@@ -23,6 +25,7 @@ vvoice:
       - /index/**
       - /webjars/**
       - /v3/**
+      - /**
 
   minio:
     endpointUrl: http://192.168.123.96:9089

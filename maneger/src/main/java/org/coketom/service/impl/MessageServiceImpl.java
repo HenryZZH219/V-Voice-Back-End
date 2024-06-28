@@ -11,6 +11,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Set;
 
 @Service
@@ -24,13 +25,14 @@ public class MessageServiceImpl implements MessageService {
     @Override
     public SysUser getUserInfo(String token) {
         String userJson = redisTemplate.opsForValue().get("user:login" + token);
-        SysUser sysUser = JSON.parseObject(userJson, SysUser.class);
-        return sysUser;
+        return JSON.parseObject(userJson, SysUser.class);
     }
 
+
+    //websocket的广播
     @Override
     public void broadcast(UserMessage Msg, Set<ChatEndpoint> connections) {
-        System.out.println(1);
+
         System.out.println(Msg);
         for (ChatEndpoint endpoint : connections) {
             synchronized (endpoint) {
@@ -46,5 +48,10 @@ public class MessageServiceImpl implements MessageService {
     @Override
     public void saveMessage(UserMessage userMessage) {
         messageMapper.saveMessage(userMessage);
+    }
+
+    @Override
+    public List<UserMessage> getMessagesByRoomId(Integer roomId) {
+        return messageMapper.getMessagesByRoomId(roomId);
     }
 }

@@ -62,12 +62,7 @@ public class LoginAuthInterceptor implements HandlerInterceptor {
         SysUser sysUser = JSON.parseObject(userInfoString, SysUser.class);
         AuthContextUtil.set(sysUser);
 
-        //保存数据到httpsession中
-        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-        HttpSession session = attributes.getRequest().getSession();
 
-        // 将用户信息存储到 HttpSession 中
-        session.setAttribute("userInfo", sysUser);
 
         //7 把redis用户信息数据更新过期时间
         redisTemplate.expire("user:login" + token,30, TimeUnit.MINUTES);

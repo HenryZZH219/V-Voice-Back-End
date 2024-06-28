@@ -1,6 +1,7 @@
 package org.coketom.service.impl;
 
 import com.alibaba.fastjson.JSON;
+import jakarta.servlet.http.HttpSession;
 import org.coketom.AuthContextUtil;
 import org.coketom.dto.system.LoginDto;
 import org.coketom.dto.system.PasswdDto;
@@ -14,7 +15,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -52,6 +56,8 @@ public class SysUserServiceImpl implements SysUserService {
                         TimeUnit.MINUTES);
         LoginVo loginVo = new LoginVo();
         loginVo.setToken(token);
+
+
         return loginVo;
 
 
@@ -73,6 +79,7 @@ public class SysUserServiceImpl implements SysUserService {
     @Override
     public void logout(String token) {
         redisTemplate.delete("user:login" + token);
+        System.out.println();
     }
 
     @Override
@@ -120,5 +127,10 @@ public class SysUserServiceImpl implements SysUserService {
                         JSON.toJSONString(sysUser),
                         30,
                         TimeUnit.MINUTES);
+    }
+
+    @Override
+    public List<SysUser> getUserInfoByIds(List<Integer> ids) {
+        return sysUserMapper.selectUsersByIds(ids);
     }
 }
