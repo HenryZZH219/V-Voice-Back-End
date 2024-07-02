@@ -28,10 +28,10 @@ vvoice:
       - /**
 
   minio:
-    endpointUrl: http://192.168.123.96:9089
-    accessKey: admin
-    secreKey: admin123456
-    bucketName: spzx-bucket
+    endpointUrl: http://124.70.216.41:9000
+    accessKey: HenryZZH
+    secreKey: zzh20010219
+    bucketName: vvoice
 
 
 ## springdoc-openapi项目配置
