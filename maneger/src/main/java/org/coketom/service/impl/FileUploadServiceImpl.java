@@ -14,9 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class FileUploadServiceImpl implements FileUploadService {
@@ -55,11 +53,13 @@ public class FileUploadServiceImpl implements FileUploadService {
             String uuid = UUID.randomUUID().toString().replaceAll("-","");
             String filename = dateDir+"/"+uuid+file.getOriginalFilename();
 
+            String contentType = getContentTypeByFileExtension(file.getOriginalFilename());
             // 文件上传
             minioClient.putObject(
                     PutObjectArgs.builder().bucket(minioProperties.getBucketName())
                             .object(filename)
                             .stream(file.getInputStream(), file.getSize(), -1)
+                            .contentType(contentType)
                             .build());
 
             //获取上传文件在minio路径
@@ -71,6 +71,30 @@ public class FileUploadServiceImpl implements FileUploadService {
             e.printStackTrace();
             throw new TomException(ResultCodeEnum.SYSTEM_ERROR);
         }
+    }
+
+    // 根据文件后缀确定Content-Type
+    private static String getContentTypeByFileExtension(String fileName) {
+        // 定义文件后缀与Content-Type的映射
+        Map<String, String> mimeTypes = new HashMap<>();
+        mimeTypes.put("jpg", "image/jpeg");
+        mimeTypes.put("jpeg", "image/jpeg");
+        mimeTypes.put("png", "image/png");
+        mimeTypes.put("gif", "image/gif");
+        mimeTypes.put("bmp", "image/bmp");
+        mimeTypes.put("webp", "image/webp");
+
+        // 提取文件后缀
+        String fileExtension = getFileExtension(fileName).toLowerCase();
+
+        // 返回对应的Content-Type，默认为application/octet-stream
+        return mimeTypes.getOrDefault(fileExtension, "application/octet-stream");
+    }
+
+    // 提取文件后缀名
+    private static String getFileExtension(String fileName) {
+        int lastIndexOfDot = fileName.lastIndexOf('.');
+        return (lastIndexOfDot == -1) ? "" : fileName.substring(lastIndexOfDot + 1);
     }
 }
 

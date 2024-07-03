@@ -73,7 +73,34 @@ public class SysUserServiceImpl implements SysUserService {
         }
         String password = DigestUtils.md5DigestAsHex(sysUser.getPassword().getBytes());
         sysUser.setPassword(password);
+        sysUser.setAvatar(getFirstSegment(userName));
         sysUserMapper.register(sysUser);
+    }
+
+    public static String getFirstSegment(String str) {
+        if (str == null || str.isEmpty()) {
+            return "";
+        }
+
+        // 使用正则表达式匹配第一个单词或第一个非英文字符
+        String[] words = str.split("\\s+"); // 以空白字符分割字符串
+        for (String word : words) {
+            // 检查每个单词
+            if (word.matches("^[a-zA-Z0-9]+")) {
+                // 如果是英文或数字单词，返回它
+                return word;
+            } else {
+                // 否则，遍历这个单词中的每个字符，找到第一个非英文字符
+                for (char c : word.toCharArray()) {
+                    if (!Character.isLetterOrDigit(c)) {
+                        return String.valueOf(c);
+                    }
+                }
+            }
+        }
+
+        // 如果没有匹配到任何非英文字符或单词，则返回空字符串
+        return "";
     }
 
     @Override

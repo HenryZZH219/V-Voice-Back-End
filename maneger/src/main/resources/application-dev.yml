@@ -25,7 +25,6 @@ vvoice:
       - /index/**
       - /webjars/**
       - /v3/**
-      - /**
 
   minio:
     endpointUrl: http://124.70.216.41:9000
