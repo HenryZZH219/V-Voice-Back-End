@@ -15,7 +15,7 @@ public enum ResultCodeEnum {
     ACCOUNT_STOP( 216, "账号已停用"),
 
     STOCK_LESS( 219, "库存不足"),
-
+    EMPTY_PARAM(301, "传入参数为空"),
     ;
 
     private Integer code ;      // 业务状态码

@@ -1,5 +1,6 @@
 package org.coketom.controller;
 
+import org.coketom.dto.system.Base64Dto;
 import org.coketom.dto.system.PasswdDto;
 import org.coketom.entity.system.SysUser;
 import org.coketom.service.SysUserService;
@@ -33,9 +34,20 @@ public class UserController {
         return Result.build(null, ResultCodeEnum.SUCCESS);
     }
 
+    @PutMapping("/updateAvatar")
+    public Result updateAvatar(@RequestHeader(name = "token") String token, @RequestBody Base64Dto Base64Request){
+//        System.out.println("controller "+avatarRequest);
+        String avatarRequest = Base64Request.getBase64();
+        if(avatarRequest.isEmpty()) {
+            return Result.build(null, ResultCodeEnum.SUCCESS);
+        }
+        sysUserService.updateAvatar(token, avatarRequest);
+        return Result.build(null, ResultCodeEnum.SUCCESS);
+    }
+
     @PostMapping("/GetUserInfoByIds")
     public Result getUserInfoByIds(@RequestBody List<Integer> ids){
         List<SysUser> sysUsers = sysUserService.getUserInfoByIds(ids);
-        return Result.build(sysUsers, ResultCodeEnum.SUCCESS);
+        return Result.build(sysUsers, ResultCodeEnum.EMPTY_PARAM);
     }
 }

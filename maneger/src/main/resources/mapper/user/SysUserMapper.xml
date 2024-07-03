@@ -140,5 +140,11 @@
         WHERE id = #{userId}
     </update>
 
+    <update id="setAvatar">
+        UPDATE user
+        SET avatar = #{url}
+        WHERE id = #{userId}
+    </update>
+
 
 </mapper>

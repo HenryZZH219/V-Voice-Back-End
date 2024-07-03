@@ -21,4 +21,6 @@ public interface SysUserService {
     void updatePasswd(String token, PasswdDto passwdDto);
 
     List<SysUser> getUserInfoByIds(List<Integer> ids);
+
+    void updateAvatar(String token, String avatarRequest);
 }

@@ -39,8 +39,7 @@ public class FileUploadServiceImpl implements FileUploadService {
             if (!found) {
                 // Make a new bucket called 'asiatrip'.
                 minioClient.makeBucket(MakeBucketArgs.builder().bucket(minioProperties.getBucketName()).build());
-            } else {
-                System.out.println("Bucket 'asiatrip' already exists.");
+                System.out.println("Bucket not exists.");
             }
 
             //获取上传文件名称

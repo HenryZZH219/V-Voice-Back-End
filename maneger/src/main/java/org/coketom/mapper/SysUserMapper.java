@@ -21,4 +21,6 @@ public interface SysUserMapper {
     void setDescription(Integer userId, String description);
 
     void setPasswd(Integer userId, String newPasswd);
+
+    void setAvatar(Integer userId, String url);
 }
