@@ -26,10 +26,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.io.ByteArrayInputStream;
 import java.text.SimpleDateFormat;
-import java.util.Base64;
-import java.util.Calendar;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -67,7 +64,7 @@ public class SysUserServiceImpl implements SysUserService {
 //                        TimeUnit.MINUTES);
         LoginVo loginVo = new LoginVo();
         loginVo.setToken(token);
-
+        loginVo.setSysUser(sysUser);
 
         return loginVo;
 
@@ -199,12 +196,17 @@ public class SysUserServiceImpl implements SysUserService {
 //            System.out.println(parts[1]);
             byte[] imageBytes = Base64.getDecoder().decode(parts[1]);
 //            System.out.println("test"+avatarRequest);
+
+            // 设置缓存头
+            Map<String, String> headers = new HashMap<>();
+            headers.put("Cache-Control", "max-age=86400");
             // 文件上传
             minioClient.putObject(
                     PutObjectArgs.builder().bucket(minioProperties.getBucketName())
                             .object(filename)
                             .stream(new ByteArrayInputStream(imageBytes), imageBytes.length, -1)
                             .contentType(contentType)
+                            .headers(headers)
                             .build());
 
             //获取上传文件在minio路径

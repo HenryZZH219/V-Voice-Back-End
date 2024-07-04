@@ -56,9 +56,7 @@ public class ChatEndpoint {
 
 
         String message = String.format("【%s加入语音】", this.user.getName());
-        System.out.println(message);
         UserMessage Msg = new UserMessage(this.roomId, this.user.getId(), message, "TEXT");
-        System.out.println(messageService);
         messageService.broadcast(Msg, connections);
 
     }

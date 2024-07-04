@@ -39,7 +39,7 @@ public class UserController {
 //        System.out.println("controller "+avatarRequest);
         String avatarRequest = Base64Request.getBase64();
         if(avatarRequest.isEmpty()) {
-            return Result.build(null, ResultCodeEnum.SUCCESS);
+            return Result.build(null, ResultCodeEnum.EMPTY_PARAM);
         }
         sysUserService.updateAvatar(token, avatarRequest);
         return Result.build(null, ResultCodeEnum.SUCCESS);
@@ -48,6 +48,6 @@ public class UserController {
     @PostMapping("/GetUserInfoByIds")
     public Result getUserInfoByIds(@RequestBody List<Integer> ids){
         List<SysUser> sysUsers = sysUserService.getUserInfoByIds(ids);
-        return Result.build(sysUsers, ResultCodeEnum.EMPTY_PARAM);
+        return Result.build(sysUsers, ResultCodeEnum.SUCCESS);
     }
 }
