@@ -1,6 +1,8 @@
 package org.coketom.service.impl;
 
 import com.alibaba.fastjson.JSON;
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
 import org.coketom.ServerEndPoint.ChatEndpoint;
 import org.coketom.entity.message.UserMessage;
 import org.coketom.entity.system.SysUser;
@@ -12,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Service
@@ -31,10 +34,11 @@ public class MessageServiceImpl implements MessageService {
 
     //websocket的广播
     @Override
-    public void broadcast(UserMessage Msg, Set<ChatEndpoint> connections) {
+    public void broadcast(UserMessage Msg, Map<Integer, ChatEndpoint> connections) {
 
-        System.out.println(Msg);
-        for (ChatEndpoint endpoint : connections) {
+//        System.out.println(Msg);
+        for (Map.Entry<Integer, ChatEndpoint> entry : connections.entrySet()) {
+            ChatEndpoint endpoint = entry.getValue();
             synchronized (endpoint) {
                 try {
                     endpoint.session.getBasicRemote().sendText(JSON.toJSONString(Msg));
@@ -53,5 +57,15 @@ public class MessageServiceImpl implements MessageService {
     @Override
     public List<UserMessage> getMessagesByRoomId(Integer roomId) {
         return messageMapper.getMessagesByRoomId(roomId);
+    }
+
+    @Override
+    public PageInfo<UserMessage> getMessagesByRoomIdByPage(Integer roomId, int page, int size) {
+        PageHelper.startPage(page,size);
+        //根据条件查询所有数据
+        List<UserMessage> list = messageMapper.getMessagesByRoomId(roomId);
+        //封装pageInfo对象
+        PageInfo<UserMessage> pageInfo = new PageInfo<>(list);
+        return pageInfo;
     }
 }

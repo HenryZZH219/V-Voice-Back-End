@@ -1,14 +1,12 @@
 package org.coketom.controller;
 
+import com.github.pagehelper.PageInfo;
 import org.coketom.entity.message.UserMessage;
 import org.coketom.service.MessageService;
 import org.coketom.vo.common.Result;
 import org.coketom.vo.common.ResultCodeEnum;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -24,5 +22,13 @@ public class MessageController {
         List<UserMessage> messages = messageService.getMessagesByRoomId(roomId);
         return Result.build(messages, ResultCodeEnum.SUCCESS);
     }
+
+    @GetMapping("/roomByPage/{roomId}")
+    public Result getMessagesByRoomIdByPage(@PathVariable Integer roomId, @RequestParam int page, @RequestParam int size) {
+        PageInfo<UserMessage> messages = messageService.getMessagesByRoomIdByPage(roomId, page, size);
+        return Result.build(messages, ResultCodeEnum.SUCCESS);
+    }
+
+
 
 }

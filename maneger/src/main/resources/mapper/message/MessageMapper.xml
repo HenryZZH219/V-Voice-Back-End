@@ -22,6 +22,7 @@
         SELECT message_id, <include refid="columns"/>
         FROM messages
         WHERE room_id = #{roomId}
+        ORDER BY message_id DESC
     </select>
 
 </mapper>
