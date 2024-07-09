@@ -132,4 +132,9 @@ public class ChatEndpoint {
         });
 
     }
+
+
+    public static Map<Integer, Map<Integer, ChatEndpoint>> getRooms() {
+        return rooms;
+    }
 }
