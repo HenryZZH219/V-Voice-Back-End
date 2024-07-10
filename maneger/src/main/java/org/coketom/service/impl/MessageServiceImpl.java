@@ -36,7 +36,7 @@ public class MessageServiceImpl implements MessageService {
     @Override
     public void broadcast(UserMessage Msg, Map<Integer, ChatEndpoint> connections) {
 
-//        System.out.println(Msg);
+        System.out.println(Msg);
         for (Map.Entry<Integer, ChatEndpoint> entry : connections.entrySet()) {
             ChatEndpoint endpoint = entry.getValue();
             synchronized (endpoint) {

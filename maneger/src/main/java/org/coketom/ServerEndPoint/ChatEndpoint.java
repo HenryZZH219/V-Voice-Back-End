@@ -79,6 +79,7 @@ public class ChatEndpoint {
             }
         }
         String message = String.format("【%s退出语音】",  this.user.getName());
+
         UserMessage Msg = new UserMessage(this.roomId, this.user.getId(), message, "TEXT");
         messageService.broadcast(Msg, connections);
     }
@@ -97,11 +98,6 @@ public class ChatEndpoint {
 
     }
 
-    private void broadcast(String message, boolean systemMsg) {
-
-        UserMessage Msg = new UserMessage(this.roomId,  this.user.getId(), message, "TEXT");
-
-    }
 
 
     private static void sendHeartbeats() {

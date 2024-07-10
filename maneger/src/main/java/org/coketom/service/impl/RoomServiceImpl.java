@@ -16,7 +16,7 @@ import java.util.Map;
 @Service
 public class RoomServiceImpl implements RoomService {
 
-    @Mapper
+    @Autowired
     private RoomMapper roomMapper;
 
     private static ChatEndpoint chatEndpoint;
@@ -33,6 +33,13 @@ public class RoomServiceImpl implements RoomService {
             RoomDto roomDto = new RoomDto(room);
             Integer roomId = roomDto.getRoomId();
             Map<Integer, ChatEndpoint> connections = roomsConnection.get(roomId);
+            if(connections!=null) {
+                connections.forEach((userId, endPoint)->{
+                    roomDto.getOnlineUsers().add(userId);
+                });
+            }
+
+            roomDtos.add(roomDto);
         }
         return roomDtos;
     }
