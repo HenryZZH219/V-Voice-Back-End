@@ -63,7 +63,7 @@ public class ChatEndpoint {
 
 
         String message = String.format("【%s加入语音】", this.user.getName());
-        UserMessage Msg = new UserMessage(this.roomId, this.user.getId(), message, "TEXT");
+        UserMessage Msg = new UserMessage(this.roomId, this.user.getId(), message, "SysMsg");
         messageService.broadcast(Msg, connections);
 
     }
@@ -80,7 +80,7 @@ public class ChatEndpoint {
         }
         String message = String.format("【%s退出语音】",  this.user.getName());
 
-        UserMessage Msg = new UserMessage(this.roomId, this.user.getId(), message, "TEXT");
+        UserMessage Msg = new UserMessage(this.roomId, this.user.getId(), message, "SysMsg");
         messageService.broadcast(Msg, connections);
     }
 
