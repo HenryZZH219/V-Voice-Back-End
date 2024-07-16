@@ -15,6 +15,7 @@ import java.util.concurrent.*;
 import jakarta.websocket.server.ServerEndpoint;
 import org.coketom.dto.message.MessageDto;
 import org.coketom.entity.message.UserMessage;
+import org.coketom.entity.message.WebRTCMessage;
 import org.coketom.entity.system.SysUser;
 import org.coketom.service.MessageService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -88,17 +89,49 @@ public class ChatEndpoint {
     public void onMessage(String message) {
         Map<Integer, ChatEndpoint> connections = rooms.get(roomId);
         MessageDto messageDto = JSON.parseObject(message, MessageDto.class);
-        if(messageDto.getMessageType().equals("PING_PONG")) {
-            this.session.getUserProperties().put("lastPongTime", System.currentTimeMillis());
-        }else {
-            UserMessage userMessage = new UserMessage(messageDto, this.roomId, this.user.getId());
-            messageService.broadcast(userMessage, connections);
-            messageService.saveMessage(userMessage);
+//        if(messageDto.getMessageType().equals("PING_PONG")) {
+//            this.session.getUserProperties().put("lastPongTime", System.currentTimeMillis());
+//        }else {
+//            UserMessage userMessage = new UserMessage(messageDto, this.roomId, this.user.getId());
+//            messageService.broadcast(userMessage, connections);
+//            messageService.saveMessage(userMessage);
+//        }
+        switch (messageDto.getMessageType()) {
+            case "PING_PONG":
+                this.session.getUserProperties().put("lastPongTime", System.currentTimeMillis());
+                break;
+            case "RTCMsg":
+                handleWebRTCMessage(messageDto, connections);
+                break;
+            default:
+                UserMessage userMessage = new UserMessage(messageDto, this.roomId, this.user.getId());
+                messageService.broadcast(userMessage, connections);
+                messageService.saveMessage(userMessage);
+                break;
         }
 
     }
 
+    private void handleWebRTCMessage(MessageDto messageDto, Map<Integer, ChatEndpoint> connections) {
+        System.out.println(messageDto);
+        // 解析 WebRTC 信令消息
+        WebRTCMessage webRTCMessage = JSON.parseObject(messageDto.getContent(), WebRTCMessage.class);
 
+        System.out.println("转发RTC消息");
+        System.out.println(webRTCMessage);
+
+        // 确定目标用户
+        Integer targetUserId = webRTCMessage.getTo();
+        ChatEndpoint targetEndpoint = connections.get(targetUserId);
+        if (targetEndpoint != null) {
+            try {
+                // 将消息转发给目标用户
+                targetEndpoint.session.getBasicRemote().sendText(JSON.toJSONString(messageDto));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
     private static void sendHeartbeats() {
         long now = System.currentTimeMillis();
