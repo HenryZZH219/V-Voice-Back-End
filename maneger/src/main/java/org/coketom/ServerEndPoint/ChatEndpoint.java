@@ -18,6 +18,8 @@ import org.coketom.entity.message.UserMessage;
 import org.coketom.entity.message.WebRTCMessage;
 import org.coketom.entity.system.SysUser;
 import org.coketom.service.MessageService;
+import org.coketom.webRTC.KurentoService;
+import org.kurento.client.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -43,6 +45,10 @@ public class ChatEndpoint {
     public Session session;
     private Integer roomId;
     private SysUser user;
+
+    //webRTC相关
+    @Autowired
+    private KurentoService kurentoService;
     @OnOpen
     public void onOpen(Session session, EndpointConfig config, @PathParam("roomId") Integer roomId ) {
 
