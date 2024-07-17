@@ -1,19 +1,21 @@
 package org.coketom.webRTC;
 
-import org.kurento.client.*;
+import org.kurento.client.KurentoClient;
+import org.kurento.client.MediaPipeline;
+import org.kurento.client.WebRtcEndpoint;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class KurentoService {
 
+    private final Map<Integer, MediaPipeline> roomPipelines = new ConcurrentHashMap<>();
+    private final Map<Integer, Map<Integer, WebRtcEndpoint>> roomEndpoints = new ConcurrentHashMap<>();
     @Autowired
     private KurentoClient kurentoClient;
-    private Map<Integer, MediaPipeline> roomPipelines = new ConcurrentHashMap<>();
-    private Map<Integer, Map<Integer, WebRtcEndpoint>> roomEndpoints = new ConcurrentHashMap<>();
 
 //    @Autowired
 //    public KurentoService(KurentoClient kurentoClient) {
