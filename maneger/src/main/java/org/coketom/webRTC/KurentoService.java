@@ -47,6 +47,7 @@ public class KurentoService {
             WebRtcEndpoint endpoint = endpoints.remove(userId);
             if (endpoint != null) {
                 endpoint.release();
+                System.out.println("endpoint.release()");
             }
             if (endpoints.isEmpty()) {
                 roomEndpoints.remove(roomId);
@@ -59,7 +60,10 @@ public class KurentoService {
         MediaPipeline pipeline = roomPipelines.remove(roomId);
         if (pipeline != null) {
             pipeline.release();
+            System.out.println("pipeline.release()");
         }
     }
+
+
 }
 

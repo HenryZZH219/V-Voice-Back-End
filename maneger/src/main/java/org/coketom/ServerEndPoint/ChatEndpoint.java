@@ -176,12 +176,14 @@ public class ChatEndpoint {
         }
     }
 
-    private void forwardWebRTCMessage(WebRTCMessage webRTCMessage, Map<Integer, ChatEndpoint> connections){
+    private void forwardWebRTCMessage(WebRTCMessage webRTCMessage){
         System.out.println("转发RTC消息");
         System.out.println(webRTCMessage);
         MessageDto messageDto = new MessageDto();
         // 确定目标用户
         Integer targetUserId = webRTCMessage.getTo();
+
+        Map<Integer, ChatEndpoint> connections = rooms.get(roomId);
         ChatEndpoint targetEndpoint = connections.get(targetUserId);
 
         messageDto.setMessageType("RTCMsg");
@@ -196,7 +198,7 @@ public class ChatEndpoint {
         }
     }
 
-    private void handleWebRTCMessage(MessageDto messageDto, Map<Integer, ChatEndpoint> connections) {
+    private void handleWebRTCMessage(MessageDto messageDto) {
         // 解析 WebRTC 信令消息
         WebRTCMessage webRTCMessage = JSON.parseObject(messageDto.getContent(), WebRTCMessage.class);
         String messageType = webRTCMessage.getType();
@@ -226,7 +228,7 @@ public class ChatEndpoint {
         String sdpOffer = webRTCMessage.getSdp();
         String sdpAnswer = webRtcEndpoint.processOffer(sdpOffer);
 
-        //将sdpAnswer转发给offer方
+        //将sdpAnswer转发给offer发送方
         WebRTCMessage response = new WebRTCMessage();
         response.setType("answer");
         response.setSdp(sdpAnswer);
@@ -234,9 +236,11 @@ public class ChatEndpoint {
         MessageDto messageDto = new MessageDto();
         messageDto.setMessageType("RTCMsg");
         messageDto.setContent(JSON.toJSONString(response));
-
+        Map<Integer, ChatEndpoint> connections = rooms.get(roomId);
+        Integer targetUserId = webRTCMessage.getTo();
+        ChatEndpoint targetEndpoint = connections.get(targetUserId);
         try {
-            session.getBasicRemote().sendText(JSON.toJSONString(messageDto));
+            targetEndpoint.session.getBasicRemote().sendText(JSON.toJSONString(messageDto));
         } catch (IOException e) {
             e.printStackTrace();
         }
