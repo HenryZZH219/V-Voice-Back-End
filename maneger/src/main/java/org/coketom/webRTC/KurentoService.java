@@ -1,11 +1,19 @@
 package org.coketom.webRTC;
 
+import com.alibaba.fastjson.JSON;
+
+import jakarta.websocket.Session;
+import org.coketom.dto.message.MessageDto;
+import org.coketom.entity.message.WebRTCMessage;
+import org.coketom.exception.TomException;
+import org.coketom.vo.common.ResultCodeEnum;
 import org.kurento.client.KurentoClient;
 import org.kurento.client.MediaPipeline;
 import org.kurento.client.WebRtcEndpoint;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -26,19 +34,42 @@ public class KurentoService {
         return roomPipelines.computeIfAbsent(roomId, k -> kurentoClient.createMediaPipeline());
     }
 
-    public WebRtcEndpoint createEndpoint(Integer roomId, Integer userId) {
+    public WebRtcEndpoint createEndpoint(Integer roomId, Integer userId, Session session) {
         MediaPipeline pipeline = getOrCreatePipeline(roomId);
         WebRtcEndpoint webRtcEndpoint = new WebRtcEndpoint.Builder(pipeline).build();
+        webRtcEndpoint.addIceCandidateFoundListener(event -> {
+            WebRTCMessage response = new WebRTCMessage();
+            response.setType("iceCandidate");
+            response.setCandidate(event.getCandidate().getCandidate());
+            MessageDto messageDto = new MessageDto();
+            messageDto.setMessageType("RTCMsg");
+            messageDto.setContent(JSON.toJSONString(response));
+            try {
+                session.getBasicRemote().sendText(JSON.toJSONString(messageDto));
+            }catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+//            JsonObject response = new JsonObject();
+//            response.addProperty("id", "iceCandidate");
+//            response.add("candidate", JsonParser.parseString(event.getCandidate().getCandidate()));
+//            try {
+//                session.sendMessage(new TextMessage(response.toString()));
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+        });
         roomEndpoints.computeIfAbsent(roomId, k -> new ConcurrentHashMap<>()).put(userId, webRtcEndpoint);
         return webRtcEndpoint;
     }
 
-    public WebRtcEndpoint getEndpoint(Integer roomId, Integer userId) {
+    public WebRtcEndpoint getEndpoint(Integer roomId, Integer userId) throws TomException{
         Map<Integer, WebRtcEndpoint> endpoints = roomEndpoints.get(roomId);
         if (endpoints != null) {
             return endpoints.get(userId);
+        }else {
+            throw new TomException(ResultCodeEnum.DATA_ERROR);
         }
-        return null;
+
     }
 
     public void removeEndpoint(Integer roomId, Integer userId) {

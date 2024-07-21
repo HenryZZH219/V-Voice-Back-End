@@ -49,6 +49,12 @@ public class MessageServiceImpl implements MessageService {
         }
     }
 
+//    @Override
+//    public void sendMsgToSingleUser(UserMessage Msg, Integer userId) {
+//        System.out.println(Msg);
+//        System.out.println("send to " + userId);
+//    }
+
     @Override
     public void saveMessage(UserMessage userMessage) {
         messageMapper.saveMessage(userMessage);

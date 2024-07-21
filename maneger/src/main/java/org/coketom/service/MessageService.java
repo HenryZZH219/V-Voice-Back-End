@@ -13,6 +13,7 @@ public interface MessageService {
     SysUser getUserInfo(String token);
     void broadcast(UserMessage Msg, Map<Integer, ChatEndpoint> connections);
 
+//    void sendMsgToSingleUser(UserMessage Msg, Integer userId);
     void saveMessage(UserMessage userMessage);
 
     List<UserMessage> getMessagesByRoomId(Integer roomId);

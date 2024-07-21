@@ -15,6 +15,8 @@ import org.kurento.client.IceCandidate;
 import org.kurento.client.WebRtcEndpoint;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import java.io.IOException;
 import java.util.Map;
@@ -42,8 +44,8 @@ public class ChatEndpoint {
     private Integer roomId;
     private SysUser user;
     //webRTC相关
-    @Autowired
-    private KurentoService kurentoService;
+//    @Autowired
+    private static KurentoService kurentoService;
 
     private static void sendHeartbeats() {
         long now = System.currentTimeMillis();
@@ -83,6 +85,10 @@ public class ChatEndpoint {
         this.messageService = messageService;
     }
 
+    @Autowired
+    private void setKurentoService(KurentoService kurentoService) {
+        this.kurentoService = kurentoService;
+    }
     @OnOpen
     public void onOpen(Session session, EndpointConfig config, @PathParam("roomId") Integer roomId) {
 
@@ -105,7 +111,7 @@ public class ChatEndpoint {
 
 
         //webRTC初始化
-        kurentoService.createEndpoint(roomId, this.user.getId());
+        kurentoService.createEndpoint(roomId, this.user.getId(), session);
 
     }
 
@@ -144,7 +150,7 @@ public class ChatEndpoint {
                 this.session.getUserProperties().put("lastPongTime", System.currentTimeMillis());
                 break;
             case "RTCMsg":
-                handleWebRTCMessage(messageDto, connections);
+                handleWebRTCMessage(messageDto);
                 break;
             default:
                 UserMessage userMessage = new UserMessage(messageDto, this.roomId, this.user.getId());
@@ -208,7 +214,7 @@ public class ChatEndpoint {
                 handleOffer(webRTCMessage);
                 break;
             case "answer":
-                handleAnswer(webRTCMessage);
+//                handleAnswer(webRTCMessage);
                 break;
             case "candidate":
                 handleCandidate(webRTCMessage);
@@ -221,9 +227,6 @@ public class ChatEndpoint {
     }
 
     private void handleOffer(WebRTCMessage webRTCMessage) {
-
-
-
         WebRtcEndpoint webRtcEndpoint = kurentoService.getEndpoint(roomId, webRTCMessage.getFrom());
         String sdpOffer = webRTCMessage.getSdp();
         String sdpAnswer = webRtcEndpoint.processOffer(sdpOffer);
@@ -232,12 +235,11 @@ public class ChatEndpoint {
         WebRTCMessage response = new WebRTCMessage();
         response.setType("answer");
         response.setSdp(sdpAnswer);
-
         MessageDto messageDto = new MessageDto();
         messageDto.setMessageType("RTCMsg");
         messageDto.setContent(JSON.toJSONString(response));
         Map<Integer, ChatEndpoint> connections = rooms.get(roomId);
-        Integer targetUserId = webRTCMessage.getTo();
+        Integer targetUserId = webRTCMessage.getFrom();
         ChatEndpoint targetEndpoint = connections.get(targetUserId);
         try {
             targetEndpoint.session.getBasicRemote().sendText(JSON.toJSONString(messageDto));
@@ -246,20 +248,35 @@ public class ChatEndpoint {
         }
 
         webRtcEndpoint.gatherCandidates();
+
+        //转发消息
+        forwardWebRTCMessage(webRTCMessage);
     }
 
     private void handleAnswer(WebRTCMessage webRTCMessage) {
+        //处理
         WebRtcEndpoint webRtcEndpoint = kurentoService.getEndpoint(roomId, webRTCMessage.getFrom());
         String sdpAnswer = webRTCMessage.getSdp();
         webRtcEndpoint.processAnswer(sdpAnswer);
+
+        //转发
+        forwardWebRTCMessage(webRTCMessage);
+
+        //连接
+        WebRtcEndpoint webRtcEndpointTo = kurentoService.getEndpoint(roomId, webRTCMessage.getTo());
+        webRtcEndpointTo.connect(webRtcEndpoint);
+        webRtcEndpoint.connect(webRtcEndpointTo);
     }
 
     private void handleCandidate(WebRTCMessage webRTCMessage) {
-        JsonObject candidate = JSON.parseObject(webRTCMessage.getCandidate());
-        IceCandidate iceCandidate = new IceCandidate(
-                candidate.getString("candidate"),
-                candidate.getString("sdpMid"),
-                candidate.getInteger("sdpMLineIndex"));
+        JsonObject candidate = JsonParser.parseString(webRTCMessage.getCandidate()).getAsJsonObject();
+        IceCandidate iceCandidate = new IceCandidate(candidate.get("candidate").getAsString(),
+                candidate.get("sdpMid").getAsString(),
+                candidate.get("sdpMLineIndex").getAsInt());
+        WebRtcEndpoint webRtcEndpoint = kurentoService.getEndpoint(roomId, webRTCMessage.getFrom());
         webRtcEndpoint.addIceCandidate(iceCandidate);
+
+        // 转发ICE候选者给对方
+//        forwardWebRTCMessage(webRTCMessage);
     }
 }
