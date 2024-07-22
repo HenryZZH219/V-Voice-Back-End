@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import jakarta.websocket.Session;
 import org.coketom.dto.message.MessageDto;
 import org.coketom.entity.message.WebRTCMessage;
+import org.coketom.service.MessageService;
 import org.kurento.client.Continuation;
 import org.kurento.client.MediaPipeline;
 import org.kurento.client.WebRtcEndpoint;
@@ -31,19 +32,21 @@ public class Room {
         return participants.values();
     }
 
-    public Room(Integer roomId, MediaPipeline pipeline) {
+    private final MessageService messageService;
+    public Room(Integer roomId, MediaPipeline pipeline, MessageService messageService) {
         this.roomId = roomId;
         this.pipeline = pipeline;
-        System.out.printf("ROOM {%d} has been created", roomId);
+        this.messageService = messageService;
+        System.out.printf("ROOM {%d} has been created\n", roomId);
     }
 
     public UserSession join(Integer userId, Session session) throws IOException {
-        System.out.printf("ROOM {%d}: adding participant {%d}", this.roomId, userId);
-        final UserSession participant = new UserSession(userId, this.roomId, this.pipeline, session);
+        System.out.printf("ROOM {%d}: adding participant {%d}\n", this.roomId, userId);
+        final UserSession participant = new UserSession(userId, this.roomId, this.pipeline, session, this.messageService);
         joinRoom(participant);
         participants.put(participant.getUserId(), participant);
 //        sendParticipantNames(participant);
-        //这个时候应该发个消息通知可以连接其它客户端了 暂时还没写
+        //这个时候应该发个消息通知可以连接其它客户端了 暂时还没写 想合并了再说
 
         return participant;
     }
@@ -53,16 +56,13 @@ public class Room {
         WebRTCMessage response = new WebRTCMessage();
         response.setType("newParticipantArrived");
         response.setFrom(newParticipant.getUserId());
-        MessageDto messageDto = new MessageDto();
-        messageDto.setMessageType("RTCMsg");
-        messageDto.setContent(JSON.toJSONString(response));
 
         final List<Integer> participantsList = new ArrayList<>(participants.values().size());
-        System.out.printf("ROOM {%d}: notifying other participants of new participant {%d}", roomId,
+        System.out.printf("ROOM {%d}: notifying other participants of new participant {%d}\n", roomId,
                 newParticipant.getUserId());
 
         for (final UserSession participant : participants.values()) {
-            participant.sendMessage(messageDto);
+            participant.sendRTCMessage(response);
             participantsList.add(participant.getUserId());
         }
 
@@ -78,7 +78,7 @@ public class Room {
 
         pipeline.release();
 
-        System.out.printf("webrtc Room {%d} closed", this.roomId);
+        System.out.printf("webrtc Room {%d} closed\n", this.roomId);
     }
 
     public void leave(UserSession user) {
@@ -89,18 +89,16 @@ public class Room {
     private void removeParticipant(Integer userId){
         participants.remove(userId);
 
-        System.out.printf("ROOM {%d}: notifying all users that {%d} is leaving the room", this.roomId, userId);
+        System.out.printf("ROOM {%d}: notifying all users that {%d} is leaving the room\n", this.roomId, userId);
 
         WebRTCMessage response = new WebRTCMessage();
         response.setType("participantLeft");
         response.setFrom(userId);
-        MessageDto messageDto = new MessageDto();
-        messageDto.setMessageType("RTCMsg");
-        messageDto.setContent(JSON.toJSONString(response));
+
 
         for (final UserSession participant : participants.values()) {
             participant.cancelVideoFrom(userId);
-            participant.sendMessage(messageDto);
+            participant.sendRTCMessage(response);
         }
 
 

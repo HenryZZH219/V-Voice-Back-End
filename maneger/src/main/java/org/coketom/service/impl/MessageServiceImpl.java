@@ -3,7 +3,9 @@ package org.coketom.service.impl;
 import com.alibaba.fastjson.JSON;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
+import jakarta.websocket.Session;
 import org.coketom.ServerEndPoint.ChatEndpoint;
+import org.coketom.dto.message.MessageDto;
 import org.coketom.entity.message.UserMessage;
 import org.coketom.entity.system.SysUser;
 import org.coketom.mapper.MessageMapper;
@@ -35,19 +37,33 @@ public class MessageServiceImpl implements MessageService {
     //websocket的广播
     @Override
     public void broadcast(UserMessage Msg, Map<Integer, ChatEndpoint> connections) {
-
         System.out.println(Msg);
         for (Map.Entry<Integer, ChatEndpoint> entry : connections.entrySet()) {
             ChatEndpoint endpoint = entry.getValue();
-            synchronized (endpoint) {
+            Session session = endpoint.session;
+            synchronized (session) {
                 try {
-                    endpoint.session.getBasicRemote().sendText(JSON.toJSONString(Msg));
+                    session.getBasicRemote().sendText(JSON.toJSONString(Msg));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
         }
     }
+
+    @Override
+    public void sendRTCMessage(MessageDto Msg, Session session) {
+
+        synchronized (session) {
+            try {
+                session.getBasicRemote().sendText(JSON.toJSONString(Msg));
+                System.out.println(Msg);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
 
 //    @Override
 //    public void sendMsgToSingleUser(UserMessage Msg, Integer userId) {

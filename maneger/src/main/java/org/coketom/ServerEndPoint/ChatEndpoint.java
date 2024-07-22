@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import jakarta.websocket.*;
 import jakarta.websocket.server.PathParam;
 import jakarta.websocket.server.ServerEndpoint;
+import lombok.Getter;
 import org.coketom.config.HttpSessionConfigurator;
 import org.coketom.dto.message.MessageDto;
 import org.coketom.entity.message.UserMessage;
@@ -32,9 +33,10 @@ public class ChatEndpoint {
 
     private static MessageService messageService;
 
-    private static ScheduledExecutorService heartbeatScheduler = Executors.newScheduledThreadPool(1);
+    private static final ScheduledExecutorService heartbeatScheduler = Executors.newScheduledThreadPool(1);
     //    private static final Set<ChatEndpoint> connections = new CopyOnWriteArraySet<>();
-    private static Map<Integer, Map<Integer, ChatEndpoint>> rooms = new ConcurrentHashMap<>();
+    @Getter
+    private static final Map<Integer, Map<Integer, ChatEndpoint>> rooms = new ConcurrentHashMap<>();
 
     static {
         // 定期执行心跳检测
@@ -61,6 +63,9 @@ public class ChatEndpoint {
                         connections.remove(connection.user.getId());
                         session.close(new CloseReason(CloseReason.CloseCodes.GOING_AWAY, "Heartbeat failed"));
 
+                        //关闭webRTC连接
+                        handler.leaveRoom(connection.user.getId(), roomId);
+
                     }
 //                    System.out.println("ping: "+connection.user.getId());
                 } catch (Exception e) {
@@ -77,18 +82,14 @@ public class ChatEndpoint {
 
     }
 
-    public static Map<Integer, Map<Integer, ChatEndpoint>> getRooms() {
-        return rooms;
-    }
-
     @Autowired
     private void setMessageService(MessageService messageService) {
-        this.messageService = messageService;
+        ChatEndpoint.messageService = messageService;
     }
 
     @Autowired
     private void setHandler(Handler handler) {
-        this.handler = handler;
+        ChatEndpoint.handler = handler;
     }
     @OnOpen
     public void onOpen(Session session, EndpointConfig config, @PathParam("roomId") Integer roomId) {
@@ -112,7 +113,7 @@ public class ChatEndpoint {
 
 
         //webRTC初始化
-        kurentoService.createEndpoint(roomId, this.user.getId(), session);
+//        kurentoService.createEndpoint(roomId, this.user.getId(), session);
 
     }
 
@@ -132,7 +133,8 @@ public class ChatEndpoint {
         messageService.broadcast(Msg, connections);
 
         // 移除WebRtcEndpoint
-        kurentoService.removeEndpoint(roomId, this.user.getId());
+//        kurentoService.removeEndpoint(roomId, this.user.getId());
+        handler.leaveRoom(this.user.getId(), roomId);
     }
 
     @OnMessage

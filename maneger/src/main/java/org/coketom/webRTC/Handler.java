@@ -6,6 +6,8 @@ import com.google.gson.JsonParser;
 import jakarta.websocket.Session;
 import org.coketom.dto.message.MessageDto;
 import org.coketom.entity.message.WebRTCMessage;
+import org.coketom.exception.TomException;
+import org.coketom.vo.common.ResultCodeEnum;
 import org.kurento.client.IceCandidate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -31,24 +33,29 @@ public class Handler {
         final UserSession user = userManager.getByUserId(webRTCMessage.getFrom());
 
         if (user != null) {
-            System.out.printf("Incoming message from user '{}': {}", user.getUserId(), webRTCMessage);
+            System.out.printf("Incoming message from user '{%d}': {%s}\n", user.getUserId(), webRTCMessage);
         } else {
-            System.out.printf("Incoming message from new user: {}", webRTCMessage);
+            System.out.printf("Incoming message from new user: {%s}\n", webRTCMessage);
         }
 
         switch (messageType) {
             case "joinRoom":
                 joinRoom(webRTCMessage, session);
+                break;
             case "receiveVideoFrom":
-
+                if (user == null) {
+                    throw new TomException(ResultCodeEnum.DATA_ERROR);
+                }
                 final Integer senderUserId = webRTCMessage.getFrom();
                 final UserSession sender = userManager.getByUserId(senderUserId);
                 final String sdpOffer = webRTCMessage.getSdp();
                 user.receiveVideoFrom(sender, sdpOffer);
                 break;
+
+                /* 放在websocket里触发
             case "leaveRoom":
-                leaveRoom(user, webRTCMessage.getRoomId());
-                break;
+                leaveRoom(user.getUserId(), webRTCMessage.getRoomId());
+                break;*/
             case "onIceCandidate":
                 JsonObject candidate = JsonParser.parseString(webRTCMessage.getCandidate()).getAsJsonObject();
                 if (user != null) {
@@ -65,14 +72,15 @@ public class Handler {
     private void joinRoom(WebRTCMessage webRTCMessage, Session session) throws IOException {
         final Integer roomId = webRTCMessage.getRoomId();
         final Integer userId = webRTCMessage.getFrom();
-        System.out.printf("PARTICIPANT {%d}: trying to join room {%d}", userId, roomId);
+        System.out.printf("PARTICIPANT {%d}: trying to join room {%d}\n", userId, roomId);
 
         Room room = roomManager.getRoom(roomId);
         final UserSession user = room.join(userId, session);
         userManager.register(user);
     }
 
-    private void leaveRoom(UserSession user, Integer roomId) throws IOException {
+    public void leaveRoom(Integer userId, Integer roomId){
+        final UserSession user = userManager.getByUserId(userId);
         final Room room = roomManager.getRoom(roomId);
         room.leave(user);
         if (room.getParticipants().isEmpty()) {
