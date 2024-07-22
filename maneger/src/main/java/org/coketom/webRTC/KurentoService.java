@@ -49,14 +49,6 @@ public class KurentoService {
             }catch (IOException e) {
                 throw new RuntimeException(e);
             }
-//            JsonObject response = new JsonObject();
-//            response.addProperty("id", "iceCandidate");
-//            response.add("candidate", JsonParser.parseString(event.getCandidate().getCandidate()));
-//            try {
-//                session.sendMessage(new TextMessage(response.toString()));
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
         });
         roomEndpoints.computeIfAbsent(roomId, k -> new ConcurrentHashMap<>()).put(userId, webRtcEndpoint);
         return webRtcEndpoint;

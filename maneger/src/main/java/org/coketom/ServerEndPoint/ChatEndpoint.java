@@ -10,6 +10,7 @@ import org.coketom.entity.message.UserMessage;
 import org.coketom.entity.message.WebRTCMessage;
 import org.coketom.entity.system.SysUser;
 import org.coketom.service.MessageService;
+import org.coketom.webRTC.Handler;
 import org.coketom.webRTC.KurentoService;
 import org.kurento.client.IceCandidate;
 import org.kurento.client.WebRtcEndpoint;
@@ -44,8 +45,8 @@ public class ChatEndpoint {
     private Integer roomId;
     private SysUser user;
     //webRTC相关
-//    @Autowired
-    private static KurentoService kurentoService;
+
+    private static Handler handler;
 
     private static void sendHeartbeats() {
         long now = System.currentTimeMillis();
@@ -86,8 +87,8 @@ public class ChatEndpoint {
     }
 
     @Autowired
-    private void setKurentoService(KurentoService kurentoService) {
-        this.kurentoService = kurentoService;
+    private void setHandler(Handler handler) {
+        this.handler = handler;
     }
     @OnOpen
     public void onOpen(Session session, EndpointConfig config, @PathParam("roomId") Integer roomId) {
@@ -138,19 +139,17 @@ public class ChatEndpoint {
     public void onMessage(String message) {
         Map<Integer, ChatEndpoint> connections = rooms.get(roomId);
         MessageDto messageDto = JSON.parseObject(message, MessageDto.class);
-//        if(messageDto.getMessageType().equals("PING_PONG")) {
-//            this.session.getUserProperties().put("lastPongTime", System.currentTimeMillis());
-//        }else {
-//            UserMessage userMessage = new UserMessage(messageDto, this.roomId, this.user.getId());
-//            messageService.broadcast(userMessage, connections);
-//            messageService.saveMessage(userMessage);
-//        }
+
         switch (messageDto.getMessageType()) {
             case "PING_PONG":
                 this.session.getUserProperties().put("lastPongTime", System.currentTimeMillis());
                 break;
             case "RTCMsg":
-                handleWebRTCMessage(messageDto);
+                try {
+                    handler.handleWebRTCMessage(this.session, messageDto);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
                 break;
             default:
                 UserMessage userMessage = new UserMessage(messageDto, this.roomId, this.user.getId());
@@ -161,122 +160,5 @@ public class ChatEndpoint {
 
     }
 
-    private void handleWebRTCMessage_oldversion(MessageDto messageDto, Map<Integer, ChatEndpoint> connections) {
-        System.out.println(messageDto);
-        // 解析 WebRTC 信令消息
-        WebRTCMessage webRTCMessage = JSON.parseObject(messageDto.getContent(), WebRTCMessage.class);
 
-        System.out.println("转发RTC消息");
-        System.out.println(webRTCMessage);
-
-        // 确定目标用户
-        Integer targetUserId = webRTCMessage.getTo();
-        ChatEndpoint targetEndpoint = connections.get(targetUserId);
-        if (targetEndpoint != null) {
-            try {
-                // 将消息转发给目标用户
-                targetEndpoint.session.getBasicRemote().sendText(JSON.toJSONString(messageDto));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    private void forwardWebRTCMessage(WebRTCMessage webRTCMessage){
-        System.out.println("转发RTC消息");
-        System.out.println(webRTCMessage);
-        MessageDto messageDto = new MessageDto();
-        // 确定目标用户
-        Integer targetUserId = webRTCMessage.getTo();
-
-        Map<Integer, ChatEndpoint> connections = rooms.get(roomId);
-        ChatEndpoint targetEndpoint = connections.get(targetUserId);
-
-        messageDto.setMessageType("RTCMsg");
-        messageDto.setContent(JSON.toJSONString(webRTCMessage));
-        if (targetEndpoint != null) {
-            try {
-                // 将消息转发给目标用户
-                targetEndpoint.session.getBasicRemote().sendText(JSON.toJSONString(messageDto));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    private void handleWebRTCMessage(MessageDto messageDto) {
-        // 解析 WebRTC 信令消息
-        WebRTCMessage webRTCMessage = JSON.parseObject(messageDto.getContent(), WebRTCMessage.class);
-        String messageType = webRTCMessage.getType();
-        //rtc服务器处理
-        switch (messageType) {
-            case "offer":
-                handleOffer(webRTCMessage);
-                break;
-            case "answer":
-//                handleAnswer(webRTCMessage);
-                break;
-            case "candidate":
-                handleCandidate(webRTCMessage);
-                break;
-            default:
-                System.out.println("Unknown WebRTC message type: " + messageType);
-                break;
-        }
-
-    }
-
-    private void handleOffer(WebRTCMessage webRTCMessage) {
-        WebRtcEndpoint webRtcEndpoint = kurentoService.getEndpoint(roomId, webRTCMessage.getFrom());
-        String sdpOffer = webRTCMessage.getSdp();
-        String sdpAnswer = webRtcEndpoint.processOffer(sdpOffer);
-
-        //将sdpAnswer转发给offer发送方
-        WebRTCMessage response = new WebRTCMessage();
-        response.setType("answer");
-        response.setSdp(sdpAnswer);
-        MessageDto messageDto = new MessageDto();
-        messageDto.setMessageType("RTCMsg");
-        messageDto.setContent(JSON.toJSONString(response));
-        Map<Integer, ChatEndpoint> connections = rooms.get(roomId);
-        Integer targetUserId = webRTCMessage.getFrom();
-        ChatEndpoint targetEndpoint = connections.get(targetUserId);
-        try {
-            targetEndpoint.session.getBasicRemote().sendText(JSON.toJSONString(messageDto));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        webRtcEndpoint.gatherCandidates();
-
-        //转发消息
-        forwardWebRTCMessage(webRTCMessage);
-    }
-
-    private void handleAnswer(WebRTCMessage webRTCMessage) {
-        //处理
-        WebRtcEndpoint webRtcEndpoint = kurentoService.getEndpoint(roomId, webRTCMessage.getFrom());
-        String sdpAnswer = webRTCMessage.getSdp();
-        webRtcEndpoint.processAnswer(sdpAnswer);
-
-        //转发
-        forwardWebRTCMessage(webRTCMessage);
-
-        //连接
-        WebRtcEndpoint webRtcEndpointTo = kurentoService.getEndpoint(roomId, webRTCMessage.getTo());
-        webRtcEndpointTo.connect(webRtcEndpoint);
-        webRtcEndpoint.connect(webRtcEndpointTo);
-    }
-
-    private void handleCandidate(WebRTCMessage webRTCMessage) {
-        JsonObject candidate = JsonParser.parseString(webRTCMessage.getCandidate()).getAsJsonObject();
-        IceCandidate iceCandidate = new IceCandidate(candidate.get("candidate").getAsString(),
-                candidate.get("sdpMid").getAsString(),
-                candidate.get("sdpMLineIndex").getAsInt());
-        WebRtcEndpoint webRtcEndpoint = kurentoService.getEndpoint(roomId, webRTCMessage.getFrom());
-        webRtcEndpoint.addIceCandidate(iceCandidate);
-
-        // 转发ICE候选者给对方
-//        forwardWebRTCMessage(webRTCMessage);
-    }
 }

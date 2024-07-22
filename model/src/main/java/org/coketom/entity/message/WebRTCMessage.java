@@ -9,4 +9,5 @@ public class WebRTCMessage {
     private Integer to;
     private String sdp;
     private String candidate;
+    private Integer roomId;
 }
