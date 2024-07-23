@@ -46,7 +46,7 @@ public class Handler {
                 if (user == null) {
                     throw new TomException(ResultCodeEnum.DATA_ERROR);
                 }
-                final Integer senderUserId = webRTCMessage.getFrom();
+                final Integer senderUserId = webRTCMessage.getTo();
                 final UserSession sender = userManager.getByUserId(senderUserId);
                 final String sdpOffer = webRTCMessage.getSdp();
                 user.receiveVideoFrom(sender, sdpOffer);

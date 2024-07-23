@@ -46,16 +46,8 @@ public class UserSession {
         this.outgoingMedia.addIceCandidateFoundListener(event -> {
             WebRTCMessage response = new WebRTCMessage();
             response.setType("iceCandidate");
-//            response.setCandidate(event.getCandidate().getCandidate());
-            IceCandidate candidate = event.getCandidate();
-            // 确保 sdpMid 和 sdpMLineIndex 有值
-            String sdpMid = candidate.getSdpMid() != null ? candidate.getSdpMid() : "0";
-            int sdpMLineIndex = candidate.getSdpMLineIndex() != -1 ? candidate.getSdpMLineIndex() : 0;
-
-            // 构建 ICE 候选者信息 JSON 对象
-            String iceCandidateMessage = String.format("{\"type\": \"iceCandidate\", \"candidate\": {\"candidate\": \"%s\", \"sdpMid\": \"%s\", \"sdpMLineIndex\": %d}}",
-                    candidate.getCandidate(), sdpMid, sdpMLineIndex);
-            response.setCandidate(iceCandidateMessage);
+            response.setCandidate(JSON.toJSONString(event.getCandidate()));
+            response.setFrom(this.userId);
             sendRTCMessage(response);
 
 //            synchronized (lock) {
@@ -73,21 +65,22 @@ public class UserSession {
     }
     public void receiveVideoFrom(UserSession sender, String sdpOffer) throws IOException {
         System.out.printf("USER {%d}: connecting with {%d} in room {}\n", this.userId, sender.getUserId());
-        System.out.printf("USER {%d}: SdpOffer for {%d} is {%s}\n", this.userId, sender.getUserId(), sdpOffer);
+        System.out.printf("USER {%d}: SdpOffer for {%d} is {}\n", this.userId, sender.getUserId());
 
         final String sdpAnswer = this.getEndpointForUser(sender).processOffer(sdpOffer);
 
-        System.out.printf("USER {%d}: SdpAnswer for {%d} is {%s}\n", this.userId, sender.getUserId(), sdpAnswer);
-        this.sendSdpAnswer(sdpAnswer);
+        System.out.printf("USER {%d}: SdpAnswer for {%d} is {}\n", this.userId, sender.getUserId());
+        this.sendSdpAnswer(sdpAnswer, sender.getUserId());
         System.out.print("gather candidates\n");
         this.getEndpointForUser(sender).gatherCandidates();
     }
 
-    private void sendSdpAnswer(String sdpAnswer) {
+    private void sendSdpAnswer(String sdpAnswer, Integer from) {
         //将sdpAnswer转发给offer发送方
         WebRTCMessage response = new WebRTCMessage();
         response.setType("answer");
         response.setSdp(sdpAnswer);
+        response.setFrom(from);
         sendRTCMessage(response);
 
 //        try {
@@ -111,27 +104,21 @@ public class UserSession {
             incoming = new WebRtcEndpoint.Builder(pipeline).build();
 
             incoming.addIceCandidateFoundListener(event -> {
+                System.out.println("产生了cand");
                 WebRTCMessage response = new WebRTCMessage();
                 response.setType("iceCandidate");
-//                response.setCandidate(event.getCandidate().getCandidate());
-
-                IceCandidate candidate = event.getCandidate();
-                // 确保 sdpMid 和 sdpMLineIndex 有值
-                String sdpMid = candidate.getSdpMid() != null ? candidate.getSdpMid() : "0";
-                int sdpMLineIndex = candidate.getSdpMLineIndex() != -1 ? candidate.getSdpMLineIndex() : 0;
-
-                // 构建 ICE 候选者信息 JSON 对象
-                String iceCandidateMessage = String.format("{\"type\": \"iceCandidate\", \"candidate\": {\"candidate\": \"%s\", \"sdpMid\": \"%s\", \"sdpMLineIndex\": %d}}",
-                        candidate.getCandidate(), sdpMid, sdpMLineIndex);
-                response.setCandidate(iceCandidateMessage);
+                response.setCandidate(JSON.toJSONString(event.getCandidate()));
+                response.setFrom(sender.getUserId());
                 sendRTCMessage(response);
             });
 
             incomingMedia.put(sender.getUserId(), incoming);
+
+            System.out.printf("PARTICIPANT {%d}: obtained endpoint for {%d}\n", this.userId, sender.getUserId());
+            sender.getOutgoingWebRtcPeer().connect(incoming);
         }
 
-        System.out.printf("PARTICIPANT {%d}: obtained endpoint for {%d}\n", this.userId, sender.getUserId());
-        sender.getOutgoingWebRtcPeer().connect(incoming);
+
 
         return incoming;
     }
