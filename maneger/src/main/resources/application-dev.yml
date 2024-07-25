@@ -1,5 +1,10 @@
 server:
   port: 8501
+#  ssl:
+#    key-store: maneger/src/main/resources/keystore.p12
+#    key-store-password: zzh20010219
+#    key-store-type: PKCS12
+#    key-alias: mycert
 
 spring:
   datasource:
