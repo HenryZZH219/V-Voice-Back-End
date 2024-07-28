@@ -1,7 +1,10 @@
 package org.coketom.webRTC;
 
 import com.alibaba.fastjson.JSON;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import jakarta.websocket.Session;
 import org.coketom.dto.message.MessageDto;
 import org.coketom.entity.message.WebRTCMessage;
@@ -48,7 +51,32 @@ public class Room {
 //        sendParticipantNames(participant);
         //这个时候应该发个消息通知可以连接其它客户端了 暂时还没写 想合并了再说
 
+//        sendParticipantNames(participant);
         return participant;
+    }
+
+    public void sendParticipantNames(UserSession user) throws IOException {
+
+        /*
+        final JsonArray participantsArray = new JsonArray();
+        for (final UserSession participant : this.getParticipants()) {
+            if (!participant.equals(user)) {
+                final JsonElement participantName = new JsonPrimitive(participant.getUserId());
+                participantsArray.add(participantName);
+            }
+        }
+
+        final JsonObject existingParticipantsMsg = new JsonObject();
+        existingParticipantsMsg.addProperty("id", "existingParticipants");
+        existingParticipantsMsg.add("data", participantsArray);
+        log.debug("PARTICIPANT {}: sending a list of {} participants", user.getName(),
+                participantsArray.size());
+        user.sendMessage(existingParticipantsMsg);*/
+        WebRTCMessage response = new WebRTCMessage();
+        response.setType("existingParticipants");
+        response.setFrom(user.getUserId());
+        user.sendRTCMessage(response);
+        System.out.println("123   "+ user.getUserId());
     }
 
     private Collection<Integer> joinRoom(UserSession newParticipant) {
