@@ -6,6 +6,7 @@ package org.coketom;
 import org.coketom.config.WebSocketConfig;
 import org.coketom.properties.MinioProperties;
 import org.coketom.properties.UserProperties;
+import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -15,6 +16,7 @@ import org.springframework.context.annotation.Import;
 @SpringBootApplication
 @EnableConfigurationProperties(value = {UserProperties.class, MinioProperties.class})
 @Import(WebSocketConfig.class)
+@MapperScan("org.coketom.mapper")
 public class ManagerApplication {
     public static void main(String[] args) {
         SpringApplication.run(ManagerApplication.class,args);
